@@ -14,11 +14,11 @@ from . import console_ui, pkgconfig_dep, pkgconfig32_dep
 from . import packager_name, packager_email
 
 import os
-import pisi.util
-import pisi.metadata
-import pisi.specfile
-import pisi.package
-from pisi.db.installdb import InstallDB
+import inary.util
+import inary.data.metadata
+import inary.data.specfile
+import inary.package
+from inary.db.installdb import InstallDB
 import stat
 import subprocess
 from collections import OrderedDict
@@ -111,23 +111,23 @@ def readlink(path):
 
 def create_files_xml(context, package):
     """ Create an XML representation of our files """
-    files = pisi.files.Files()
+    files = inary.data.files.Files()
     global history_timestamp
 
-    # TODO: Remove reliance on pisi.util functions completely.
+    # TODO: Remove reliance on inary.util functions completely.
 
     for path in sorted(package.emit_files()):
         if path[0] == '/':
             path = path[1:]
 
         full_path = os.path.join(context.get_install_dir(), path)
-        fpath, hash = pisi.util.calculate_hash(full_path)
+        fpath, hash = inary.util.calculate_hash(full_path)
 
         if os.path.islink(fpath):
-            fsize = long(len(readlink(full_path)))
+            fsize = int(len(readlink(full_path)))
             st = os.lstat(fpath)
         else:
-            fsize = long(os.path.getsize(full_path))
+            fsize = int(os.path.getsize(full_path))
             st = os.stat(fpath)
 
         permanent = package.is_permanent("/" + path)
@@ -142,8 +142,7 @@ def create_files_xml(context, package):
             console_ui.emit_warning("Package", "{} has suid bit set".
                                     format(full_path))
 
-        path = path.decode("latin1").encode('utf-8')
-        file_info = pisi.files.FileInfo(path=path, type=ftype,
+        file_info = inary.data.files.FileInfo(path=path, type=ftype,
                                         permanent=permanent, size=fsize,
                                         hash=hash, uid=str(st.st_uid),
                                         gid=str(st.st_gid),
@@ -158,8 +157,8 @@ def create_files_xml(context, package):
 
 def create_packager(name, email):
     """ Factory: Create a packager """
-    packager = pisi.specfile.Packager()
-    packager.name = unicode(name)
+    packager = inary.data.specfile.Packager()
+    packager.name = str(name)
     packager.email = str(email)
     return packager
 
@@ -172,7 +171,7 @@ def metadata_from_package(context, package, files):
     global fallback_date
     global accum_packages
 
-    meta = pisi.metadata.MetaData()
+    meta = inary.data.metadata.MetaData()
     spec = context.spec
 
     packager = create_packager(spec.packager_name, spec.packager_email)
@@ -208,7 +207,7 @@ def metadata_from_package(context, package, files):
             meta.package.history = context.spec.history.history
 
     if not update:
-        update = pisi.specfile.Update()
+        update = inary.data.specfile.Update()
         update.comment = "Packaging update"
         update.name = packager.name
         update.email = packager.email
@@ -266,13 +265,13 @@ def handle_dependencies(context, gene, metadata, package, files):
     # to internal names at all and are completely from the user
     if package.name in context.spec.replaces:
         for item in sorted(set(context.spec.replaces[package.name])):
-            repl = pisi.replace.Replace()
+            repl = inary.data.replace.Replace()
             repl.package = str(item)
             metadata.package.replaces.append(repl)
     # conflicts
     if package.name in context.spec.conflicts:
         for item in sorted(set(context.spec.conflicts[package.name])):
-            conf = pisi.conflict.Conflict()
+            conf = inary.data.conflict.Conflict()
             conf.package = str(item)
             metadata.package.conflicts.append(conf)
 
@@ -282,12 +281,12 @@ def handle_dependencies(context, gene, metadata, package, files):
             name = None
             g = pkgconfig32_dep.match(sym)
             if g:
-                spc = pisi.specfile.PkgConfig32Provide()
+                spc = inary.data.specfile.PkgConfig32Provide()
                 spc.om = g.group(1)
                 metadata.package.providesPkgConfig32.append(spc)
             g = pkgconfig_dep.match(sym)
             if g:
-                spc = pisi.specfile.PkgConfigProvide()
+                spc = inary.data.specfile.PkgConfigProvide()
                 spc.om = g.group(1)
                 metadata.package.providesPkgConfig.append(spc)
 
@@ -319,7 +318,7 @@ def handle_dependencies(context, gene, metadata, package, files):
     for dependency in dependencies:
         release = context.spec.pkg_release
 
-        newDep = pisi.dependency.Dependency()
+        newDep = inary.analyzer.dependency.Dependency()
 
         local_fullname = context.spec.get_package_name(package.name)
 
@@ -349,7 +348,7 @@ def handle_dependencies(context, gene, metadata, package, files):
     for depname in context.spec.rundeps[package.name]:
         if depname in dependencies:
             continue
-        dep = pisi.dependency.Dependency()
+        dep = inary.analyzer.dependency.Dependency()
         if depname in all_names:
             dep.releaseFrom = str(context.spec.pkg_release)
         dep.package = str(depname)
@@ -372,7 +371,7 @@ def create_meta_xml(context, gene, package, files):
     meta.package.distributionRelease = \
         config.values.general.distribution_release
     meta.package.architecture = config.values.general.architecture
-    meta.package.packageFormat = pisi.package.Package.default_format
+    meta.package.packageFormat = inary.package.Package.default_format
 
     handle_dependencies(context, gene, meta, package, files)
 
@@ -403,8 +402,8 @@ def create_eopkg(context, gene, package, outputDir):
     # Start creating a package.
 
     try:
-        pkg = pisi.package.Package(fpath, "w",
-                                   format=pisi.package.Package.default_format,
+        pkg = inary.package.Package(fpath, "w",
+                                   format=inary.package.Package.default_format,
                                    tmp_dir=pdir)
     except Exception as e:
         console_ui.emit_error("Build", "Failed to emit package: {}".
@@ -420,7 +419,6 @@ def create_eopkg(context, gene, package, outputDir):
     for finfo in pkg.files.list:
         # old eopkg trick to ensure the file names are all valid
         orgname = os.path.join(context.get_install_dir(), finfo.path)
-        orgname = orgname.encode('utf-8').decode('utf-8').encode("latin1")
 
         # if os.path.islink(orgname) and not os.path.isdir(orgname):
         #     t = history_timestamp
@@ -460,7 +458,7 @@ def write_spec(context, gene, outputDir):
     else:
         packages = list(sorted(gene.packages.keys()))
 
-    spec = pisi.specfile.SpecFile()
+    spec = inary.data.specfile.SpecFile()
 
     legacy_sha1 = "79eb0752a961b8e0d15c77d298c97498fbc89c5a"
     legacy_url = "https://solus-project.com/sources/README.Solus"
@@ -468,7 +466,7 @@ def write_spec(context, gene, outputDir):
     history = None
     pkg_main = accum_packages[packages[0]]
     spec.history = pkg_main.package.history
-    spec.source = pisi.specfile.Source()
+    spec.source = inary.data.specfile.Source()
     spec.source.name = context.spec.pkg_name
     spec.source.summary['en'] = context.spec.get_summary("main")
     spec.source.description['en'] = context.spec.get_description("main")
@@ -479,7 +477,7 @@ def write_spec(context, gene, outputDir):
     spec.source.buildDependencies = list()
 
     # Avoid unnecessary diffs
-    archive = pisi.specfile.Archive()
+    archive = inary.data.specfile.Archive()
     archive.sha1sum = legacy_sha1
     archive.uri = legacy_url
     archive.type = "binary"
@@ -495,7 +493,7 @@ def write_spec(context, gene, outputDir):
         if pkg == "dbginfo" or pkg == "32bit-dbginfo":
             continue
 
-        specPkg = pisi.specfile.Package()
+        specPkg = inary.data.specfile.Package()
         copies = ["name", "summary", "description", "partOf",
                   "replaces", "conflicts"]
         for item in copies:
@@ -505,7 +503,7 @@ def write_spec(context, gene, outputDir):
 
         # Now the fun bit.
         for f in sorted(gene.packages[pkg].emit_files()):
-            fc = pisi.specfile.Path()
+            fc = inary.data.specfile.Path()
             fc.path = f
             fc.fileType = get_file_type(f)
             specPkg.files.append(fc)

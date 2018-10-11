@@ -12,9 +12,9 @@
 #
 
 from . import console_ui
-from pisi.db.installdb import InstallDB
-from pisi.db.packagedb import PackageDB
-from pisi.db.filesdb import FilesDB
+from inary.db.installdb import InstallDB
+from inary.db.packagedb import PackageDB
+from inary.db.filesdb import FilesDB
 import os
 
 # Provided historically for our pre-glvnd architecture.
@@ -235,7 +235,7 @@ class DependencyResolver:
             if not r:
                 r = self.get_symbol_external(info, sym)
                 if not r:
-                    print("Fatal: Unknown symbol: {}".format(sym))
+                    print(("Fatal: Unknown symbol: {}".format(sym)))
                     continue
             # Don't self depend
             if pkgName == r:
@@ -350,7 +350,7 @@ class DependencyResolver:
         if not r:
             r = self.get_kernel_external(info, info.dep_kernel)
             if not r:
-                print("Fatal: Unknown kernel: {}".format(sym))
+                print(("Fatal: Unknown kernel: {}".format(sym)))
                 return
         # Don't self depend
         if pkgName == r:
