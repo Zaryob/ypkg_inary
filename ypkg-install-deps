@@ -13,9 +13,9 @@
 
 from ypkg2 import console_ui
 from ypkg2.ypkgspec import YpkgSpec
-from pisi.db.filesdb import FilesDB
-from pisi.db.installdb import InstallDB
-from pisi.db.packagedb import PackageDB
+from inary.db.filesdb import FilesDB
+from inary.db.installdb import InstallDB
+from inary.db.packagedb import PackageDB
 from ypkg2 import pkgconfig_dep, pkgconfig32_dep
 from ypkg2.main import show_version
 

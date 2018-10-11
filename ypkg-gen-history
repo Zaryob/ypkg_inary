@@ -17,7 +17,7 @@ from ypkg2.main import show_version
 import subprocess
 import sys
 import os
-import pisi.specfile
+import inary.data.specfile
 import re
 import argparse
 
@@ -165,7 +165,7 @@ def main():
     for i in history:
         com = i[1]
         spec = i[0]
-        update = pisi.specfile.Update()
+        update = inary.data.specfile.Update()
         update.name = unicode(com.name)
         update.email = com.email
         update.version = spec.pkg_version

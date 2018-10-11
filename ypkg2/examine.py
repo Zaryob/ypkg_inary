@@ -15,7 +15,7 @@ from . import console_ui
 from .metadata import readlink
 from . import remove_prefix
 from . import EMUL32PC
-import magic
+import inary.analyzer.magic as magic
 import re
 import os
 import subprocess
@@ -124,7 +124,7 @@ class FileReport:
                                     " path: {}".format(file))
             return
 
-        for line in output.split("\n"):
+        for line in output.decode("utf-8").split("\n"):
             line = line.strip()
 
             # Match rpath
@@ -226,7 +226,7 @@ class FileReport:
         fobj = os.path.join(dirn, fpath)
 
         try:
-            mg = magic.from_file(fobj)
+            mg = magic.file_type(fobj)
         except Exception as e:
             return
 
@@ -366,7 +366,7 @@ def store_debug(context, pretty, file, magic_string):
     # Account for race condition in directory creation
     dirs = os.path.dirname(did_full)
     try:
-        os.makedirs(dirs, mode=00755)
+        os.makedirs(dirs, mode=0o0755)
     except Exception as e:
         pass
     if not os.path.exists(dirs):
@@ -451,7 +451,7 @@ class PackageExaminer:
                 file = file[1:]
             fpath = os.path.join(install_dir, file)
             try:
-                mgs = magic.from_file(fpath)
+                mgs = magic.file_type(fpath)
             except Exception as e:
                 print(e)
                 continue

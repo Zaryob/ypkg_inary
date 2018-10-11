@@ -1,6 +1,14 @@
 ypkg2
 -----
 
+YPKG package creating system which is this version have changed for using inary package management system by Suleyman Poyraz (Zaryob)
+
+Changes:
+  * Ported to python 3
+  * Adapted to inary system
+
+Original Readme Descriptions
+
 **Modern, declarative, structured build format**
 
 
@@ -129,6 +137,8 @@ License
 -------
 
 GPL-3.0
+Changes:
+Copyright © 2018 Suleyman Poyraz
 
 Copyright © 2015-2017 Ikey Doherty
 

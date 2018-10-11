@@ -20,10 +20,11 @@ from .sources import SourceManager, GitSource
 import os
 from collections import OrderedDict
 # Consider moving this into a stub
-import pisi.version
-import pisi.history
-import pisi.pxml.xmlfile as xmlfile
-import pisi.pxml.autoxml as autoxml
+
+import inary.version
+import inary.data.history
+import inary.sxml.xmlfile as xmlfile
+import inary.sxml.autoxml as autoxml
 
 from yaml import load as yaml_load
 try:
@@ -67,7 +68,7 @@ class PackageSanity:
     def is_version_valid(version):
         """ Determine if the given version is valid """
         try:
-            v = pisi.version.make_version(version)
+            v = inary.version.make_version(version)
         except Exception as e:
             console_ui.emit_error("YAML", "Invalid version: {}".format(
                                    version))
@@ -222,11 +223,11 @@ class YpkgSpec:
         ])
         # Build steps are handled separately
         self.build_steps = OrderedDict([
-            ("setup", unicode),
-            ("build", unicode),
-            ("install", unicode),
-            ("check", unicode),
-            ("profile", unicode),
+            ("setup", str),
+            ("build", str),
+            ("install", str),
+            ("check", str),
+            ("profile", str),
         ])
         self.summaries = dict()
         self.descriptions = dict()
@@ -333,7 +334,7 @@ class YpkgSpec:
         # Grab the main root elements (k->v mapping)
         sets = [self.mandatory_tokens, self.optional_tokens, self.build_steps]
         for tk_set in sets:
-            for token in tk_set.keys():
+            for token in list(tk_set.keys()):
                 t = tk_set[token]
 
                 if token not in yaml_data and tk_set != self.mandatory_tokens:
@@ -368,7 +369,7 @@ class YpkgSpec:
 
         # Ensure this package would actually be able to build..
         steps = [self.step_setup, self.step_build, self.step_install]
-        steps = filter(lambda s: s, steps)
+        steps = [s for s in steps if s]
         if len(steps) == 0:
             console_ui.emit_error("YAML", "No functional build steps found")
             return False
@@ -416,7 +417,7 @@ class YpkgSpec:
             fpath = os.path.join(p, i)
             if not os.path.exists(fpath):
                 continue
-            comp = pisi.component.CompatComponent()
+            comp = inary.component.CompatComponent()
             try:
                 comp.read(fpath)
                 console_ui.emit_error("Component",
@@ -454,9 +455,7 @@ class YpkgSpec:
 
 
 class PackageHistory(xmlfile.XmlFile):
-
     __metaclass__ = autoxml.autoxml
-
     tag = "YPKG"
 
-    t_History = [[pisi.specfile.Update], autoxml.mandatory]
+    t_History = [[inary.data.specfile.Update], autoxml.mandatory]

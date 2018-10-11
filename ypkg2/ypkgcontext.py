@@ -13,7 +13,7 @@
 
 from . import console_ui
 
-import pisi.config
+import inary.config
 import os
 import shutil
 import multiprocessing
@@ -84,7 +84,7 @@ class Flags:
     @staticmethod
     def filter_flags(f, filters):
         """ Filter the flags from this set """
-        nflags = filter(lambda s: s not in filters, f)
+        nflags = [s for s in f if s not in filters]
         return nflags
 
     @staticmethod
@@ -289,7 +289,7 @@ class YpkgContext:
 
     def init_config(self):
         """ Initialise our configuration prior to building """
-        conf = pisi.config.Config()
+        conf = inary.config.Config()
 
         # For now follow the eopkg.conf..
         self.build.host = conf.values.build.host
