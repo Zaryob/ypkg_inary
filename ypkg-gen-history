@@ -166,7 +166,7 @@ def main():
         com = i[1]
         spec = i[0]
         update = inary.data.specfile.Update()
-        update.name = unicode(com.name)
+        update.name = str(com.name)
         update.email = com.email
         update.version = spec.pkg_version
         update.release = str(spec.pkg_release)

@@ -20,7 +20,6 @@ from .sources import SourceManager, GitSource
 import os
 from collections import OrderedDict
 # Consider moving this into a stub
-
 import inary.version
 import inary.data.history
 import inary.sxml.xmlfile as xmlfile
@@ -311,11 +310,6 @@ class YpkgSpec:
 
         filename = os.path.basename(path)
 
-        # We'll get rid of this at some point :P
-        if filename != "package.yml":
-            console_ui.emit_warning("Unnecessarily Anal Warning",
-                                    "File is not named package.yml")
-
         # Attempt to parse the input file
         with open(path, "r") as inpfile:
             try:
@@ -417,7 +411,7 @@ class YpkgSpec:
             fpath = os.path.join(p, i)
             if not os.path.exists(fpath):
                 continue
-            comp = inary.component.CompatComponent()
+            comp = inary.data.component.CompatComponent()
             try:
                 comp.read(fpath)
                 console_ui.emit_error("Component",
@@ -454,8 +448,8 @@ class YpkgSpec:
         return self.summaries[name]
 
 
-class PackageHistory(xmlfile.XmlFile):
-    __metaclass__ = autoxml.autoxml
+class PackageHistory(xmlfile.XmlFile, metaclass=autoxml.autoxml):
+
     tag = "YPKG"
 
     t_History = [[inary.data.specfile.Update], autoxml.mandatory]

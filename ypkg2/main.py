@@ -202,8 +202,8 @@ def build_package(filename, outputDir):
         packager_name = ypkg2.packager_name
         packager_email = ypkg2.packager_email
         console_ui.emit_warning("Config", "Using default packager values")
-        print(("  Name: {}".format(packager_name)))
-        print(("  Email: {}".format(packager_email)))
+        print("  Name: {}".format(packager_name))
+        print("  Email: {}".format(packager_email))
 
     spec.packager_name = packager_name
     spec.packager_email = packager_email
@@ -435,8 +435,8 @@ def build_package(filename, outputDir):
     if len(gene.packages) == 0:
         console_ui.emit_error("Package", "No resulting packages found")
         w = "https://solus-project.com/articles/packaging/"
-        print(("Ensure your files end up in $installdir. Did you mean to "
-              "use %make_install?\n\nPlease see the help center: {}".format(w)))
+        print("Ensure your files end up in $installdir. Did you mean to "
+              "use %make_install?\n\nPlease see the help center: {}".format(w))
         sys.exit(1)
 
     gene.emit_packages()

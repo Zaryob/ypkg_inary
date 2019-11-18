@@ -47,10 +47,6 @@ class DependencyResolver:
 
     global_rpaths = set()
     global_rpaths32 = set()
-    global_sonames = dict()
-    global_sonames32 = dict()
-    global_pkgconfigs = dict()
-    global_pkgconfig32s = dict()
     global_kernels = dict()
     gene = None
 
@@ -92,8 +88,6 @@ class DependencyResolver:
         self.pdb = PackageDB()
         self.fdb = FilesDB()
 
-        # Cache the pkgconfigs known in the pdb
-        self.pkgConfigs, self.pkgConfigs32 = self.pdb.get_pkgconfig_providers()
 
     def get_symbol_provider(self, info, symbol):
         """ Grab the symbol from the local packages """
@@ -171,61 +165,6 @@ class DependencyResolver:
                 return lpkg
         return None
 
-    def get_pkgconfig_provider(self, info, name):
-        """ Get the internal provider for a pkgconfig name """
-        if info.emul32:
-            if name in self.global_pkgconfig32s:
-                pkg = self.global_pkgconfig32s[name]
-                return self.ctx.spec.get_package_name(pkg)
-        if name in self.global_pkgconfigs:
-            pkg = self.global_pkgconfigs[name]
-            return self.ctx.spec.get_package_name(pkg)
-        return None
-
-    def get_pkgconfig_external(self, info, name):
-        """ Get the external provider of a pkgconfig name """
-        pkg = None
-
-        if info.emul32:
-            if name in self.pkgconfig32_cache:
-                return self.pkgconfig32_cache[name]
-        else:
-            if name in self.pkgconfig_cache:
-                return self.pkgconfig_cache[name]
-
-        if info.emul32:
-            # InstallDB set
-            nom = self.fdb.get_pkgconfig32_provider(name)
-            if nom:
-                pkg = self.idb.get_package(nom[0])
-            if not pkg:
-                nom = self.fdb.get_pkgconfig_provider(name)
-                if nom:
-                    pkg = self.idb.get_package(nom[0])
-
-            # PackageDB set
-            if not pkg:
-                if name in self.pkgConfigs32:
-                    pkg = self.pdb.get_package(self.pkgConfigs32[name])
-            if not pkg:
-                if name in self.pkgConfigs:
-                    pkg = self.pdb.get_package(self.pkgConfigs[name])
-        else:
-            nom = self.fdb.get_pkgconfig_provider(name)
-            if nom:
-                pkg = self.idb.get_package(nom[0])
-            if not pkg:
-                if name in self.pkgConfigs:
-                    pkg = self.pdb.get_package(self.pkgConfigs[name])
-
-        if not pkg:
-            return None
-        if info.emul32:
-            self.pkgconfig32_cache[name] = pkg.name
-        else:
-            self.pkgconfig_cache[name] = pkg.name
-        return pkg.name
-
     def handle_binary_deps(self, packageName, info):
         """ Handle direct binary dependencies """
         pkgName = self.ctx.spec.get_package_name(packageName)
@@ -235,68 +174,12 @@ class DependencyResolver:
             if not r:
                 r = self.get_symbol_external(info, sym)
                 if not r:
-                    print(("Fatal: Unknown symbol: {}".format(sym)))
+                    print("Fatal: Unknown symbol: {}".format(sym))
                     continue
             # Don't self depend
             if pkgName == r:
                 continue
             self.gene.packages[packageName].depend_packages.add(r)
-
-    def handle_pkgconfig_deps(self, packageName, info):
-        """ Handle pkgconfig dependencies """
-        pkgName = self.ctx.spec.get_package_name(packageName)
-
-        for item in info.pkgconfig_deps:
-
-            prov = self.get_pkgconfig_provider(info, item)
-            if not prov:
-                prov = self.get_pkgconfig_external(info, item)
-
-            if not prov:
-                console_ui.emit_warning("PKGCONFIG", "Not adding unknown"
-                                        " dependency {} to {}".
-                                        format(item, pkgName))
-                continue
-            tgtPkg = self.gene.packages[packageName]
-
-            # Yes, it's a set, but i  dont want the ui emission spam
-            if prov in tgtPkg.depend_packages:
-                continue
-            # Forbid circular dependencies
-            if pkgName == prov:
-                continue
-            tgtPkg.depend_packages.add(prov)
-
-            console_ui.emit_info("PKGCONFIG", "{} adds dependency on {}".
-                                 format(pkgName, prov))
-
-    def handle_pkgconfig_provides(self, packageName, info):
-        adder = None
-        if info.emul32:
-            adder = "pkgconfig32({})".format(info.pkgconfig_name)
-        else:
-            adder = "pkgconfig({})".format(info.pkgconfig_name)
-        # TODO: Add versioning in examine.py .. ?
-        self.gene.packages[packageName].provided_symbols.add(adder)
-        pass
-
-    def handle_soname_links(self, packageName, info):
-        """ Add dependencies between packages due to a .so splitting """
-        ourName = self.ctx.spec.get_package_name(packageName)
-
-        for link in info.soname_links:
-            fi = self.gene.get_file_owner(link)
-            if not fi:
-                console_ui.emit_warning("SOLINK", "{} depends on non existing "
-                                        "soname link: {}".
-                                        format(packageName, link))
-                continue
-            pkgName = self.ctx.spec.get_package_name(fi.name)
-            if pkgName == ourName:
-                continue
-            self.gene.packages[packageName].depend_packages.add(pkgName)
-            console_ui.emit_info("SOLINK", "{} depends on {} through .so link".
-                                 format(ourName, pkgName))
 
     def get_kernel_provider(self, info, version):
         """ i.e. self dependency situation """
@@ -350,7 +233,7 @@ class DependencyResolver:
         if not r:
             r = self.get_kernel_external(info, info.dep_kernel)
             if not r:
-                print(("Fatal: Unknown kernel: {}".format(sym)))
+                print("Fatal: Unknown kernel: {}".format(sym))
                 return
         # Don't self depend
         if pkgName == r:
@@ -378,10 +261,7 @@ class DependencyResolver:
                         self.global_sonames[info.soname] = packageName
                 if info.pkgconfig_name:
                     pcName = info.pkgconfig_name
-                    if info.emul32:
-                        self.global_pkgconfig32s[pcName] = packageName
-                    else:
-                        self.global_pkgconfigs[pcName] = packageName
+
                 if info.prov_kernel:
                     self.global_kernels[info.prov_kernel] = packageName
 
@@ -390,12 +270,6 @@ class DependencyResolver:
             for info in packageSet[packageName]:
                 if info.symbol_deps:
                     self.handle_binary_deps(packageName, info)
-
-                if info.pkgconfig_deps:
-                    self.handle_pkgconfig_deps(packageName, info)
-
-                if info.pkgconfig_name:
-                    self.handle_pkgconfig_provides(packageName, info)
 
                 if info.soname_links:
                     self.handle_soname_links(packageName, info)

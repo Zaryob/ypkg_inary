@@ -28,10 +28,6 @@ def remove_prefix(fpath, prefix):
         fpath = "/" + fpath
     return fpath
 
-pkgconfig32_dep = re.compile("^pkgconfig32\((.*)\)$")
-pkgconfig_dep = re.compile("^pkgconfig\((.*)\)$")
-
-
 global packager_name
 global packager_email
 

@@ -79,7 +79,7 @@ def get_key_value_mapping(data, t):
         elif type(val) in iterable_types:
             # Illegal to have a secondary layer here!!
             console_ui.emit_error("YAML", "Expected a value here")
-            print(("Erronous line: {}".format(str(mapp))))
+            print("Erronous line: {}".format(str(mapp)))
             return None
         else:
             # This is key->value mapping

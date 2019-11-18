@@ -10,7 +10,7 @@
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 
-from . import console_ui, pkgconfig_dep, pkgconfig32_dep
+from . import console_ui
 from . import packager_name, packager_email
 
 import os
@@ -238,8 +238,8 @@ def metadata_from_package(context, package, files):
 
 
 def construct_package_name(context, package):
-    """ .eopkg path """
-    extension = "eopkg"
+    """ .inary path """
+    extension = ".inary"
     name = context.spec.get_package_name(package.name)
     config = context.pconfig
 
@@ -279,16 +279,7 @@ def handle_dependencies(context, gene, metadata, package, files):
         for sym in package.provided_symbols:
             spc = None
             name = None
-            g = pkgconfig32_dep.match(sym)
-            if g:
-                spc = inary.data.specfile.PkgConfig32Provide()
-                spc.om = g.group(1)
-                metadata.package.providesPkgConfig32.append(spc)
-            g = pkgconfig_dep.match(sym)
-            if g:
-                spc = inary.data.specfile.PkgConfigProvide()
-                spc.om = g.group(1)
-                metadata.package.providesPkgConfig.append(spc)
+
 
     all_names = set()
     for i in gene.packages:

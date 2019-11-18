@@ -15,7 +15,7 @@ from . import console_ui
 from .metadata import readlink
 from . import remove_prefix
 from . import EMUL32PC
-import inary.analyzer.magic as magic
+import magic
 import re
 import os
 import subprocess
@@ -124,7 +124,7 @@ class FileReport:
                                     " path: {}".format(file))
             return
 
-        for line in output.decode("utf-8").split("\n"):
+        for line in output.split("\n"):
             line = line.strip()
 
             # Match rpath
@@ -149,64 +149,6 @@ class FileReport:
                 if so:
                     self.soname = so.group(1)
 
-    def scan_pkgconfig(self, file):
-        sub = ""
-        pcDir = os.path.dirname(file)
-        pcPaths = []
-        # Ensure we account for private pkgconfig deps too
-        if self.emul32:
-            pcPaths.append(os.path.join(pcDir, "../../lib32/pkgconfig"))
-            pcPaths.append(EMUL32PC)
-        else:
-            pcPaths.append(os.path.join(pcDir, "../../lib64/pkgconfig"))
-            pcPaths.append(os.path.join(pcDir, "../../lib/pkgconfig"))
-        pcPaths.append(os.path.join(pcDir, "../../share/pkgconfig"))
-        pkgConfigPaths = []
-        for path in pcPaths:
-            p = os.path.abspath(path)
-            if p and os.path.exists(p) and p not in pkgConfigPaths:
-                pkgConfigPaths.append(p)
-
-        if len(pkgConfigPaths) > 0:
-            sub = "PKG_CONFIG_PATH=\"{}\" ".format(":".join(pkgConfigPaths))
-
-        cmds = [
-            "LC_ALL=C {}pkg-config --print-requires \"{}\"",
-            "LC_ALL=C {}pkg-config --print-requires-private \"{}\""
-        ]
-
-        pcname = os.path.basename(file).split(".pc")[0]
-        self.pkgconfig_name = pcname
-
-        if not share_ctx.spec.pkg_autodep:
-            return
-        for cmd in cmds:
-            try:
-                out = subprocess.check_output(cmd.format(sub, file),
-                                              shell=True)
-            except Exception as e:
-                print(e)
-                continue
-            for line in out.split("\n"):
-                line = line.strip()
-
-                if line == "":
-                    continue
-                name = None
-                # In future we'll do something useful with versions
-                if ">=" in line:
-                    name = line.split(">=")[0]
-                elif "=" in line:
-                    # This is an internal dependency
-                    name = line.split("=")[0]
-                else:
-                    name = line
-                name = name.strip()
-
-                if not self.pkgconfig_deps:
-                    self.pkgconfig_deps = set()
-                self.pkgconfig_deps.add(name)
-
     def add_solink(self, file, pretty):
         """ .so links are almost always split into -devel subpackages in ypkg,
             unless explicitly overriden. However, they are useless without the
@@ -226,7 +168,7 @@ class FileReport:
         fobj = os.path.join(dirn, fpath)
 
         try:
-            mg = magic.file_type(fobj)
+            mg = magic.detect_from_filename(fobj)
         except Exception as e:
             return
 
@@ -451,7 +393,7 @@ class PackageExaminer:
                 file = file[1:]
             fpath = os.path.join(install_dir, file)
             try:
-                mgs = magic.file_type(fpath)
+                mgs = magic.detect_from_filename(fpath).mime_type
             except Exception as e:
                 print(e)
                 continue
