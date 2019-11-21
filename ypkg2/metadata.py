@@ -238,8 +238,7 @@ def metadata_from_package(context, package, files):
 
 
 def construct_package_name(context, package):
-    """ .inary path """
-    extension = ".inary"
+    extension = "rfp.inary"
     name = context.spec.get_package_name(package.name)
     config = context.pconfig
 
@@ -355,6 +354,7 @@ def create_meta_xml(context, gene, package, files):
 
     iSize = sum([x.size for x in files.list])
     meta.package.installedSize = iSize
+    meta.package.rfp = "YPKG_PACKAGE"
 
     meta.package.buildHost = config.values.build.build_host
 
@@ -462,6 +462,7 @@ def write_spec(context, gene, outputDir):
     spec.source.summary['en'] = context.spec.get_summary("main")
     spec.source.description['en'] = context.spec.get_description("main")
     spec.source.homepage = context.spec.pkg_homepage
+    spec.source.rfp = "YPKG_PACKAGE"
     spec.source.packager = pkg_main.source.packager
     spec.source.license = pkg_main.package.license
     spec.source.partOf = pkg_main.package.partOf
