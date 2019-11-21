@@ -37,6 +37,7 @@ from configobj import ConfigObj
 
 def show_version():
     print("Ypkg - Package Build Tool")
+    print("!!! This ypkg is changed for Sulin Distro. Don't use in other distros.")
     print("\nCopyright (C) 2015-2017 Ikey Doherty\n")
     print("This program is free software; you are free to redistribute it\n"
           "and/or modify it under the terms of the GNU General Public License"
